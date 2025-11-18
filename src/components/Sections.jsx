@@ -1,7 +1,4 @@
-import { useEffect, useState } from 'react';
 import { MapPin, Clock3, TrainFront, AlertTriangle, TrafficCone } from 'lucide-react';
-
-const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
 
 function Section({ title, icon: Icon, children, action }) {
   return (
@@ -68,50 +65,18 @@ function List({ items, type }) {
   );
 }
 
-export default function Sections() {
-  const [transit, setTransit] = useState([]);
-  const [accidents, setAccidents] = useState([]);
-  const [roadworks, setRoadworks] = useState([]);
-
-  useEffect(() => {
-    async function fetchAll() {
-      try {
-        const [t, a, r] = await Promise.all([
-          fetch(`${API_BASE}/api/transit`).then(res => res.json()),
-          fetch(`${API_BASE}/api/accidents`).then(res => res.json()),
-          fetch(`${API_BASE}/api/roadworks`).then(res => res.json()),
-        ]);
-        setTransit(Array.isArray(t) ? t : []);
-        setAccidents(Array.isArray(a) ? a : []);
-        setRoadworks(Array.isArray(r) ? r : []);
-      } catch (e) {
-        console.error(e);
-      }
-    }
-    fetchAll();
-  }, []);
-
-  const stats = {
-    transitOnTime: Math.max(0, Math.min(100, 100 - (transit.filter(x => x.delay_minutes > 0).length / Math.max(1, transit.length)) * 100)),
-    activeAccidents: accidents.length,
-    roadworks: roadworks.length
-  };
-
+export default function Sections({ transit = [], accidents = [], roadworks = [], loading = false }) {
   return (
-    <div className="container mx-auto px-6 grid grid-cols-1 lg:grid-cols-3 gap-6 py-8">
-      <div className="lg:col-span-2 space-y-6">
-        <Section title="Transit" icon={TrainFront}>
-          <List items={transit} type="transit" />
-        </Section>
-        <Section title="Accidents" icon={AlertTriangle}>
-          <List items={accidents} type="accident" />
-        </Section>
-      </div>
-      <div className="space-y-6">
-        <Section title="Road Works" icon={TrafficCone}>
-          <List items={roadworks} type="roadwork" />
-        </Section>
-      </div>
+    <div className="space-y-6">
+      <Section title="Transit" icon={TrainFront}>
+        {loading ? <p className="text-white/60 text-sm">Loading...</p> : <List items={transit} type="transit" />}
+      </Section>
+      <Section title="Accidents" icon={AlertTriangle}>
+        {loading ? <p className="text-white/60 text-sm">Loading...</p> : <List items={accidents} type="accident" />}
+      </Section>
+      <Section title="Road Works" icon={TrafficCone}>
+        {loading ? <p className="text-white/60 text-sm">Loading...</p> : <List items={roadworks} type="roadwork" />}
+      </Section>
     </div>
   );
 }
